@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Creepz Trait Merch</title>
+    </head>
+    <body>
+        <header>
+            <h1>Creepz Trait Merch Order confirmation!</h1>
+            <p>You have successfully placed an order for the unofficial Creepz trait merchandise. Your order details are listed below.<p> 
+            <p>Thank you for your contribution of ${{total}} towards Creepz supporting the Creepz community. The Overlord is very pleased with your purchase.</p>
+        </header>
+        <div>
+            <h3>Shipping Info</h3>
+            <address>
+                {{name}}
+                <br />
+                {{address1}} {{address2}}
+                <br />
+                {{city}},{{state}} {{zip}}
+                <br />
+                {{country}}
+            </address>
+            <h3>Order #{{orderID}}</h3>
+            <table width="100%" style="border: 1px solid #ebebeb;">
+                {{#each cart}}
+                    <tr>
+                        <td style="width:100px;">
+                            <img src={{imageUrl}} alt={{title}} width="100px" />
+                        </td>
+                        <td>
+                            <h4>{{title}}</h4>
+                            {{#each options}}
+                                <span style="display:inline-block;padding-right:5px;">{{name}} - {{value}}</span>
+                            {{/each}}
+                        </td>
+                        <td>
+                            {{quantity}} x {{price}}
+                        </td>
+                        <td>
+                            ${{itemTotal}}
+                        </td>
+                    </tr>
+                {{/each}}
+            </table>
+            <h3>Order Total - ${{total}}</h3>
+        </div>
+        <footer style="margin-top: 20px;">
+            <p>If you have any questions or concerns, please reach out to <a href="https://twitter.com/kylebebeau">beebs</a> on twitter or email <a href="mailto:kyle@theinitgroup.com">kyle@theinitgroup.com</a></p>
+            <p>Built for you by your fellow Creepz, <a href="https://theinitgroup.com">beebs</a> &amp; <a href="https://github.com/metalfacesec">MetalFace</a></p>
+        </footer>
+    </body>
+</html>

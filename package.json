@@ -1,0 +1,53 @@
+{
+  "name": "pgm",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.2.2",
+    "bcrypt": "^5.1.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-handlebars": "^7.0.7",
+    "express-session": "^1.17.3",
+    "md5": "^2.3.0",
+    "mongoose": "^6.7.4",
+    "nodemailer": "^6.9.1",
+    "nodemailer-express-handlebars": "^6.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "^5.0.1",
+    "stripe": "^12.0.0",
+    "underscore": "^1.13.6",
+    "uuid": "^9.0.0"
+  },
+  "scripts": {
+    "dev": "node --legacy-watch ./src/index.js"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "description": "Server to handle form submissions by email and storage",
+  "main": "index.js",
+  "repository": "https://github.com/Bebeau/pgmoutfitters.git",
+  "author": "Kyle Bebeau",
+  "license": "MIT",
+  "packageManager": "yarn@1.22.1"
+}
