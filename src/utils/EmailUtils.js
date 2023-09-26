@@ -22,36 +22,36 @@ class EmailUtils {
                     name: item.name,
                     qty: item.qty,
                     link: `https://pgmoutfitters.com/products/deer-feeders/${item.name.toLowerCase()}`,
-                    price: EmailUtils.formatter.format(Number(item.price.dealer))
+                    price: EmailUtils.formatter.format(Number(item.price.retail))
                 });
             }
         });
         return newCart;
     }
-    static async setDealerPricing(cart) {
-        let newCart = [];
-        cart.forEach((item) => {
-            if (item.qty > 0) {
-                newCart.push({
-                    name: item.name,
-                    qty: item.qty,
-                    link: `https://pgmoutfitters.com/products/deer-feeders/${item.name.toLowerCase()}`,
-                    price: EmailUtils.formatter.format(Number(item.price.dealer))
-                });
-            }
-        });
-        return newCart;
-    }
-    static isDealerPricing(type, cart) {
-        let totalInputValue = 0;
-        cart.map((item) => {
-            totalInputValue = Number(item.qty) + totalInputValue;
-        });
-        if (totalInputValue >= 5 && type !== 'hunter') {
-            return true;
-        }
-        return false;
-    }
+    // static async setDealerPricing(cart) {
+    //     let newCart = [];
+    //     cart.forEach((item) => {
+    //         if (item.qty > 0) {
+    //             newCart.push({
+    //                 name: item.name,
+    //                 qty: item.qty,
+    //                 link: `https://pgmoutfitters.com/products/deer-feeders/${item.name.toLowerCase()}`,
+    //                 price: EmailUtils.formatter.format(Number(item.price.dealer))
+    //             });
+    //         }
+    //     });
+    //     return newCart;
+    // }
+    // static isDealerPricing(type, cart) {
+    //     let totalInputValue = 0;
+    //     cart.map((item) => {
+    //         totalInputValue = Number(item.qty) + totalInputValue;
+    //     });
+    //     if (totalInputValue >= 5 && type !== 'hunter') {
+    //         return true;
+    //     }
+    //     return false;
+    // }
     static capitalize(word) {
         return word[0].toUpperCase() + word.slice(1).toLowerCase();
     }
@@ -61,13 +61,12 @@ class EmailUtils {
         maximumFractionDigits: 0,
     });
     static async sendStaffEmail(inquiry) {
-        console.log('INQUIRY: ',inquiry);
-        const isDealerPricing = EmailUtils.isDealerPricing(inquiry.type, inquiry.cart);
+        // const isDealerPricing = EmailUtils.isDealerPricing(inquiry.type, inquiry.cart);
         let newCart;
         newCart = await EmailUtils.setRetailPricing(inquiry.cart);
-        if (isDealerPricing) {
-            newCart = await EmailUtils.setDealerPricing(inquiry.cart);
-        }
+        // if (isDealerPricing) {
+        //     newCart = await EmailUtils.setDealerPricing(inquiry.cart);
+        // }
         const staffEmail = {
             from: 'PGM Outfitters Website Inquiry <noreply@pgmoutfitters.com>',
             to: 'sales@pgmoutfitters.com',

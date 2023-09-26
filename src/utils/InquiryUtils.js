@@ -15,8 +15,6 @@ class UserUtils {
 		updatedAt
 		) {
 		email = email.toLowerCase();
-		
-		console.log('COMPANY: ', company);
 
 		return new Promise((resolve, reject) => {
 			let inquiry = new Inquiry();
