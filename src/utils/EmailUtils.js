@@ -154,7 +154,7 @@ class EmailUtils {
       .map((item) => ({
         name: item.name,
         qty: item.qty,
-        link: `https://pgmoutfitters.com/products/deer-feeders/${item.name.toLowerCase()}`,
+        link: `https://pgmoutfitters.com/products/deer-feeders/${item.name.toLowerCase().replace(/\s+/g, '-')}`,
         price: EmailUtils.formatter.format(Number(item.price.retail)),
       }));
   }
@@ -167,6 +167,7 @@ class EmailUtils {
     const staffEmail = {
       from: 'PGM Outfitters Website Inquiry <noreply@pgmoutfitters.com>',
       to: ['sales@pgmoutfitters.com', 'precisiongear@bellsouth.net', 'kyle@cltdev.com'],
+      // to: 'kyle@cltdev.com',
       subject: 'New Purchase Inquiry',
       template: 'staff',
       context: {

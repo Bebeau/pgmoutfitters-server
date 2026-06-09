@@ -7,7 +7,7 @@ const router = express.Router();
 router.post('/api/inquiry/submit', (req,res) => {
 	let requiredParams = ['type', 'first', 'last', 'email', 'phone', 'status', 'cart', 'cost'];
 	requiredParams.forEach(param => {
-		if (param !== 'cart' && typeof req.body[param] !== 'string' || param !== 'cart' && !req.body[param].length) {
+		if ( (param !== 'cart' && typeof req.body[param] !== 'string') || (param !== 'cart' && !req.body[param].length) ) {
 			return res.send(Response.clientError('Unable to send inquiry. All fields required.', []));
 		}
 	});
