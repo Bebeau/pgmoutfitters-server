@@ -18,11 +18,19 @@ async function connectDb() {
 }
 
 function setupCors() {
+	const allowedOrigins = [
+		config.publicDomain,
+		"http://127.0.0.1:3000",
+		"http://localhost:3000"
+	];
+
 	app.use(cors({
-		origin: `${config.publicDomain}`,
-		methods: ['POST', 'PUT', 'GET', 'OPTIONS', 'HEAD', 'DELETE'],
+		origin: allowedOrigins,
+		methods: ['GET','POST','PUT','DELETE','OPTIONS'],
 		credentials: true
 	}));
+
+	app.options('*', cors());
 }
 
 function setupSession() {
@@ -54,7 +62,9 @@ const app = express();
 
 connectDb();
 setupCors();
+
 setupSession();
 setupMiddleware();
+
 setupRoutes();
 startServer();

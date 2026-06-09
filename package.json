@@ -25,7 +25,7 @@
     "uuid": "^9.0.0"
   },
   "scripts": {
-    "dev": "node --legacy-watch ./src/index.js"
+    "dev": "node ./src/index.js"
   },
   "eslintConfig": {
     "extends": [

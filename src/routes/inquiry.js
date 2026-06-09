@@ -10,9 +10,6 @@ router.post('/api/inquiry/submit', (req,res) => {
 		if (param !== 'cart' && typeof req.body[param] !== 'string' || param !== 'cart' && !req.body[param].length) {
 			return res.send(Response.clientError('Unable to send inquiry. All fields required.', []));
 		}
-		// if(param === 'cart' && typeof req.body[param] !== 'object') {
-		// 	return res.send(Response.clientError('Unable to send inquiry. Must include at least 1 product.', []));
-		// }
 	});
 
 	InquiryUtils.newInquiry(
@@ -33,6 +30,7 @@ router.post('/api/inquiry/submit', (req,res) => {
 			console.log("ERROR WITH CREATING INQUIRY...");
 			return res.send(Response.clientError('Unable to create inquiry.', []));
 		}
+		console.log('START OF SEND EMAIL...');
 		await EmailUtils.sendStaffEmail(inquiry);
 		res.send(Response.success('success', inquiry.getPublic(inquiry)));
 	})
