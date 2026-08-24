@@ -49,5 +49,5 @@
   "repository": "https://github.com/Bebeau/pgmoutfitters.git",
   "author": "Kyle Bebeau",
   "license": "MIT",
-  "packageManager": "yarn@1.22.1"
+  "packageManager": "npm@10.9.7"
 }
