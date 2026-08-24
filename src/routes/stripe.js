@@ -23,7 +23,7 @@ router.post(
 				event.type === 'checkout.session.completed' ||
 				event.type === 'checkout.session.async_payment_succeeded'
 			) {
-				return CheckoutUtils.handleCheckoutCompleted(event.data.object);
+				return CheckoutUtils.handleCheckoutCompleted(event.data.object, event.type);
 			}
 			if (
 				event.type === 'checkout.session.async_payment_failed' ||

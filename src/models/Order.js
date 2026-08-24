@@ -13,6 +13,7 @@ class Order {
 		this.connectTransferCents = row.connect_transfer_cents != null ? row.connect_transfer_cents : 0;
 		this.totalCents = row.total_cents != null ? row.total_cents : 0;
 		this.status = row.status != null ? row.status : 'pending';
+		this.emailSentAt = row.email_sent_at != null ? row.email_sent_at : null;
 		this.createdAt = row.created_at;
 		this.updatedAt = row.updated_at;
 	}

@@ -67,6 +67,22 @@ describe('CheckoutUtils.priceCart', () => {
 		assert.equal(cart.total_cents, 600000);
 	});
 
+	it('rejects merged qty above 20 per slug', () => {
+		assert.throws(
+			() => CheckoutUtils.priceCart([{ slug: '1-n-1', qty: 21 }]),
+			(err) => err.status === 400 && /20/.test(err.message)
+		);
+		assert.throws(
+			() => CheckoutUtils.priceCart([
+				{ slug: '1-n-1', qty: 12 },
+				{ slug: '1-n-1', qty: 9 }
+			]),
+			(err) => err.status === 400 && /20/.test(err.message)
+		);
+		const atCap = CheckoutUtils.priceCart([{ slug: '1-n-1', qty: 20 }]);
+		assert.equal(atCap.items[0].qty, 20);
+	});
+
 	it('builds product links on /deer-feeders/{slug}', () => {
 		assert.equal(CheckoutUtils.productPageUrl('1-n-1'), 'https://pgmoutfitters.com/deer-feeders/1-n-1');
 		assert.equal(CheckoutUtils.productPageUrl('rice-brand').includes('/products/deer-feeders/'), false);
@@ -129,5 +145,223 @@ describe('CheckoutUtils.priceCart', () => {
 		assert.equal(CheckoutUtils.connectTransferCents(1010), 51);
 		// 1009 × 0.05 = 50.45 → 50
 		assert.equal(CheckoutUtils.connectTransferCents(1009), 50);
+	});
+});
+
+function paidSession(overrides) {
+	return Object.assign({
+		id: 'cs_test',
+		payment_status: 'paid',
+		amount_total: 112500,
+		currency: 'usd',
+		metadata: { order_id: '11111111-1111-1111-1111-111111111111' },
+		customer_details: { name: 'Pat', email: 'pat@example.com', phone: '3185550100' },
+		payment_intent: 'pi_test'
+	}, overrides);
+}
+
+function pendingOrder(overrides) {
+	return Object.assign({
+		id: '11111111-1111-1111-1111-111111111111',
+		status: 'pending',
+		totalCents: 112500,
+		emailSentAt: null
+	}, overrides);
+}
+
+describe('CheckoutUtils.handleCheckoutCompleted', () => {
+	it('does not mark paid on unpaid checkout.session.completed', async () => {
+		const calls = [];
+		const order = pendingOrder();
+		const result = await CheckoutUtils.handleCheckoutCompleted(
+			paidSession({ payment_status: 'unpaid' }),
+			'checkout.session.completed',
+			{
+				OrderUtils: {
+					findBySessionOrOrderId: async () => order,
+					markPaid: async () => {
+						calls.push('markPaid');
+						return { alreadyPaid: false, order };
+					},
+					markEmailSent: async () => { calls.push('emailSent'); }
+				},
+				EmailUtils: {
+					sendOrderEmails: async () => { calls.push('email'); }
+				}
+			}
+		);
+		assert.equal(result, null);
+		assert.deepEqual(calls, []);
+		assert.equal(CheckoutUtils.shouldMarkPaid({ payment_status: 'unpaid' }, 'checkout.session.completed'), false);
+	});
+
+	it('marks paid on completed when payment_status is paid', async () => {
+		const calls = [];
+		const order = pendingOrder();
+		const paid = pendingOrder({ status: 'paid' });
+		await CheckoutUtils.handleCheckoutCompleted(
+			paidSession(),
+			'checkout.session.completed',
+			{
+				OrderUtils: {
+					findBySessionOrOrderId: async () => order,
+					markPaid: async () => {
+						calls.push('markPaid');
+						return { alreadyPaid: false, order: paid };
+					},
+					markEmailSent: async () => { calls.push('emailSent'); }
+				},
+				EmailUtils: {
+					sendOrderEmails: async () => { calls.push('email'); }
+				}
+			}
+		);
+		assert.deepEqual(calls, ['markPaid', 'email', 'emailSent']);
+	});
+
+	it('marks paid on async_payment_succeeded even without payment_status paid', async () => {
+		const calls = [];
+		const order = pendingOrder();
+		const paid = pendingOrder({ status: 'paid' });
+		await CheckoutUtils.handleCheckoutCompleted(
+			paidSession({ payment_status: 'unpaid' }),
+			'checkout.session.async_payment_succeeded',
+			{
+				OrderUtils: {
+					findBySessionOrOrderId: async () => order,
+					markPaid: async () => {
+						calls.push('markPaid');
+						return { alreadyPaid: false, order: paid };
+					},
+					markEmailSent: async () => { calls.push('emailSent'); }
+				},
+				EmailUtils: {
+					sendOrderEmails: async () => { calls.push('email'); }
+				}
+			}
+		);
+		assert.deepEqual(calls, ['markPaid', 'email', 'emailSent']);
+	});
+
+	it('returns 500 and does not mark paid when amount_total mismatches', async () => {
+		const calls = [];
+		const order = pendingOrder({ totalCents: 112500 });
+		await assert.rejects(
+			() => CheckoutUtils.handleCheckoutCompleted(
+				paidSession({ amount_total: 999 }),
+				'checkout.session.completed',
+				{
+					OrderUtils: {
+						findBySessionOrOrderId: async () => order,
+						markPaid: async () => {
+							calls.push('markPaid');
+							return { alreadyPaid: false, order };
+						}
+					},
+					EmailUtils: { sendOrderEmails: async () => {} }
+				}
+			),
+			(err) => err.status === 500 && /mismatch/.test(err.message)
+		);
+		assert.deepEqual(calls, []);
+	});
+
+	it('returns 500 and does not mark paid when currency is not usd', async () => {
+		const calls = [];
+		await assert.rejects(
+			() => CheckoutUtils.handleCheckoutCompleted(
+				paidSession({ currency: 'cad' }),
+				'checkout.session.completed',
+				{
+					OrderUtils: {
+						findBySessionOrOrderId: async () => pendingOrder(),
+						markPaid: async () => {
+							calls.push('markPaid');
+							return { alreadyPaid: false, order: pendingOrder() };
+						}
+					},
+					EmailUtils: { sendOrderEmails: async () => {} }
+				}
+			),
+			(err) => err.status === 500 && /mismatch/.test(err.message)
+		);
+		assert.deepEqual(calls, []);
+	});
+
+	it('sends email when already paid but email_sent_at is null', async () => {
+		const calls = [];
+		const paid = pendingOrder({ status: 'paid', emailSentAt: null });
+		await CheckoutUtils.handleCheckoutCompleted(
+			paidSession(),
+			'checkout.session.completed',
+			{
+				OrderUtils: {
+					findBySessionOrOrderId: async () => paid,
+					markPaid: async () => ({ alreadyPaid: true, order: paid }),
+					markEmailSent: async () => { calls.push('emailSent'); }
+				},
+				EmailUtils: {
+					sendOrderEmails: async () => { calls.push('email'); }
+				}
+			}
+		);
+		assert.deepEqual(calls, ['email', 'emailSent']);
+	});
+
+	it('skips email when email_sent_at is already set', async () => {
+		const calls = [];
+		const paid = pendingOrder({ status: 'paid', emailSentAt: new Date() });
+		await CheckoutUtils.handleCheckoutCompleted(
+			paidSession(),
+			'checkout.session.completed',
+			{
+				OrderUtils: {
+					findBySessionOrOrderId: async () => paid,
+					markPaid: async () => ({ alreadyPaid: true, order: paid }),
+					markEmailSent: async () => { calls.push('emailSent'); }
+				},
+				EmailUtils: {
+					sendOrderEmails: async () => { calls.push('email'); }
+				}
+			}
+		);
+		assert.deepEqual(calls, []);
+	});
+
+	it('quotes product href in the order email template', () => {
+		const fs = require('fs');
+		const path = require('path');
+		const template = fs.readFileSync(
+			path.join(__dirname, '..', 'emails', 'templates', 'order.hbs'),
+			'utf8'
+		);
+		assert.match(template, /href="\{\{link\}\}"/);
+	});
+
+	it('does not set email_sent_at and throws when send fails', async () => {
+		const calls = [];
+		const paid = pendingOrder({ status: 'paid', emailSentAt: null });
+		await assert.rejects(
+			() => CheckoutUtils.handleCheckoutCompleted(
+				paidSession(),
+				'checkout.session.completed',
+				{
+					OrderUtils: {
+						findBySessionOrOrderId: async () => paid,
+						markPaid: async () => ({ alreadyPaid: true, order: paid }),
+						markEmailSent: async () => { calls.push('emailSent'); }
+					},
+					EmailUtils: {
+						sendOrderEmails: async () => {
+							const err = new Error('SES failed');
+							err.status = 500;
+							throw err;
+						}
+					}
+				}
+			),
+			(err) => /SES failed/.test(err.message)
+		);
+		assert.deepEqual(calls, []);
 	});
 });

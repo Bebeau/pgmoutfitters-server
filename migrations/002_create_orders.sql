@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS orders (
 	total_cents INTEGER NOT NULL DEFAULT 0,
 	status TEXT NOT NULL DEFAULT 'pending'
 		CHECK (status IN ('pending', 'paid', 'failed')),
+	email_sent_at TIMESTAMPTZ,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

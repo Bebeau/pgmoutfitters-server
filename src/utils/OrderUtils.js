@@ -45,6 +45,19 @@ class OrderUtils {
 		return new Order(result.rows[0]);
 	}
 
+	static async findBySessionOrOrderId(sessionId, orderId) {
+		if (sessionId) {
+			const bySession = await OrderUtils.findBySessionId(sessionId);
+			if (bySession) {
+				return bySession;
+			}
+		}
+		if (orderId) {
+			return OrderUtils.findById(orderId);
+		}
+		return null;
+	}
+
 	static async findById(orderId) {
 		const result = await PostgresUtils.query(
 			`SELECT * FROM orders WHERE id = $1`,
@@ -94,6 +107,20 @@ class OrderUtils {
 		const err = new Error('Order not found for checkout session.');
 		err.status = 404;
 		throw err;
+	}
+
+	static async markEmailSent(orderId) {
+		const result = await PostgresUtils.query(
+			`UPDATE orders
+			 SET email_sent_at = NOW(), updated_at = NOW()
+			 WHERE id = $1 AND email_sent_at IS NULL
+			 RETURNING *`,
+			[orderId]
+		);
+		if (!result.rows[0]) {
+			return null;
+		}
+		return new Order(result.rows[0]);
 	}
 
 	static async markFailed({ sessionId, orderId }) {

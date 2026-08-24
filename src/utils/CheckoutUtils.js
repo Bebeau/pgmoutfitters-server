@@ -12,6 +12,7 @@ class CheckoutError extends Error {
 
 class CheckoutUtils {
 	static CheckoutError = CheckoutError;
+	static MAX_QTY_PER_SLUG = 20;
 
 	// 5% of the session total, rounded to the nearest cent (JS Math.round,
 	// half-up / away from zero for positive amounts).
@@ -70,6 +71,13 @@ class CheckoutUtils {
 		});
 
 		const items = Array.from(merged.values());
+		items.forEach((item) => {
+			if (item.qty > CheckoutUtils.MAX_QTY_PER_SLUG) {
+				throw new CheckoutError(
+					`Quantity cannot exceed ${CheckoutUtils.MAX_QTY_PER_SLUG} for ${item.slug}.`
+				);
+			}
+		});
 		const subtotal_cents = items.reduce((sum, item) => {
 			return sum + (item.unit_amount_cents * item.qty);
 		}, 0);
@@ -125,12 +133,46 @@ class CheckoutUtils {
 		}
 	}
 
-	static async handleCheckoutCompleted(session) {
-		const OrderUtils = require('./OrderUtils');
-		const EmailUtils = require('./EmailUtils');
+	// Delayed methods (ACH, etc.) fire checkout.session.completed while still
+	// unpaid. Only mark paid when Stripe says paid, or on async success.
+	static shouldMarkPaid(session, eventType) {
+		if (eventType === 'checkout.session.async_payment_succeeded') {
+			return true;
+		}
+		return !!(session && session.payment_status === 'paid');
+	}
+
+	static assertSessionMatchesOrder(session, order) {
+		const currency = String((session && session.currency) || '').toLowerCase();
+		const amountTotal = session && session.amount_total;
+		if (amountTotal !== order.totalCents || currency !== 'usd') {
+			const err = new Error(
+				`Checkout session amount/currency mismatch: session ${amountTotal} ${currency || '(none)'} vs order ${order.totalCents} usd.`
+			);
+			err.status = 500;
+			throw err;
+		}
+	}
+
+	static async handleCheckoutCompleted(session, eventType, deps) {
+		const OrderUtils = (deps && deps.OrderUtils) || require('./OrderUtils');
+		const EmailUtils = (deps && deps.EmailUtils) || require('./EmailUtils');
+
+		if (!CheckoutUtils.shouldMarkPaid(session, eventType)) {
+			return null;
+		}
 
 		const sessionId = session.id;
 		const orderId = session.metadata && session.metadata.order_id;
+		const order = await OrderUtils.findBySessionOrOrderId(sessionId, orderId);
+		if (!order) {
+			const err = new Error('Order not found for checkout session.');
+			err.status = 404;
+			throw err;
+		}
+
+		CheckoutUtils.assertSessionMatchesOrder(session, order);
+
 		const paymentIntentId = typeof session.payment_intent === 'string'
 			? session.payment_intent
 			: (session.payment_intent && session.payment_intent.id) || null;
@@ -145,18 +187,12 @@ class CheckoutUtils {
 			customerPhone: details.phone || ''
 		});
 
-		if (result.alreadyPaid) {
-			return result.order;
+		const paidOrder = result.order;
+		if (!paidOrder.emailSentAt) {
+			await EmailUtils.sendOrderEmails(paidOrder);
+			await OrderUtils.markEmailSent(paidOrder.id);
 		}
-
-		try {
-			await EmailUtils.sendOrderEmails(result.order);
-		} catch (err) {
-			// Payment already recorded. Do not fail the webhook (Stripe would retry
-			// and the already-paid path would skip email anyway).
-			console.error('Paid order email failed; order is still marked paid:', err);
-		}
-		return result.order;
+		return paidOrder;
 	}
 
 	static async handleCheckoutFailed(session) {
