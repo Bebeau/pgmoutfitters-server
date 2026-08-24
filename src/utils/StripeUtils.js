@@ -61,7 +61,7 @@ class StripeUtils {
 			})),
 			phone_number_collection: { enabled: true },
 			success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-			cancel_url: `${origin}/`,
+			cancel_url: `${origin}/cart`,
 			metadata: {
 				order_id: String(order.id)
 			},
