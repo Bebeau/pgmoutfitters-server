@@ -7,11 +7,11 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
-const MongoUtils = require('./utils/MongoUtils');
+const PostgresUtils = require('./utils/PostgresUtils');
 
 async function connectDb() {
 	try {
-		await MongoUtils.connect();
+		await PostgresUtils.connect();
 	} catch (err) {
 		return console.log(err);
 	}
