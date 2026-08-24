@@ -137,6 +137,18 @@ transporter.use(
   })
 );
 
+const CheckoutUtils = require('./CheckoutUtils');
+
+const STAFF_RECIPIENTS = [
+  'sales@pgmoutfitters.com',
+  'precisiongear@bellsouth.net',
+  'kyle@cltdev.com',
+];
+
+const PICKUP_ADDRESS = '908 Joseph St, Shreveport, LA 71107';
+const PICKUP_PHONE = '(318) 227-8145';
+const FROM_ADDRESS = 'PGM Outfitters <noreply@pgmoutfitters.com>';
+
 class EmailUtils {
   static formatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -166,7 +178,7 @@ class EmailUtils {
 
     const staffEmail = {
       from: 'PGM Outfitters Website Inquiry <noreply@pgmoutfitters.com>',
-      to: ['sales@pgmoutfitters.com', 'precisiongear@bellsouth.net', 'kyle@cltdev.com'],
+      to: STAFF_RECIPIENTS,
       // to: 'kyle@cltdev.com',
       subject: 'New Purchase Inquiry',
       template: 'staff',
@@ -189,6 +201,64 @@ class EmailUtils {
       return info;
     } catch (err) {
       console.error('Staff autoresponder failed to send:', err);
+      throw err;
+    }
+  }
+
+  static orderEmailContext(order, heading) {
+    const items = (order.items || []).map((item) => ({
+      name: item.name,
+      qty: item.qty,
+      link: CheckoutUtils.productPageUrl(item.slug),
+      price: EmailUtils.formatter.format(Number(item.unit_amount_cents) / 100),
+    }));
+
+    return {
+      layout: false,
+      heading,
+      customerName: order.customerName || '',
+      customerEmail: order.customerEmail || '',
+      customerPhone: order.customerPhone || '',
+      items,
+      total: EmailUtils.formatter.format(Number(order.totalCents) / 100),
+      pickupAddress: PICKUP_ADDRESS,
+      pickupPhone: PICKUP_PHONE,
+      orderId: order.id,
+    };
+  }
+
+  static async sendOrderEmails(order) {
+    const buyerContext = EmailUtils.orderEmailContext(order, 'Thanks for your order');
+    const staffContext = EmailUtils.orderEmailContext(order, 'New paid website order');
+
+    if (order.customerEmail) {
+      try {
+        const info = await transporter.sendMail({
+          from: FROM_ADDRESS,
+          to: order.customerEmail,
+          subject: 'Your PGM Outfitters order',
+          template: 'order',
+          context: buyerContext,
+        });
+        console.log('Buyer order email sent...', info.messageId);
+      } catch (err) {
+        console.error('Buyer order email failed to send:', err);
+        throw err;
+      }
+    }
+
+    try {
+      const info = await transporter.sendMail({
+        from: FROM_ADDRESS,
+        to: STAFF_RECIPIENTS,
+        subject: 'New paid website order',
+        template: 'order',
+        context: staffContext,
+      });
+      console.log('Staff order email sent...', info.messageId);
+      return info;
+    } catch (err) {
+      console.error('Staff order email failed to send:', err);
       throw err;
     }
   }
