@@ -12,10 +12,13 @@ module.exports = {
 		}
 	},
 	stripe: {
+		// Stripe Dashboard → Developers → API keys (test mode is fine for this PR)
 		secretKey: 'sk_test_...',
+		// Stripe Dashboard → Developers → Webhooks → add POST /api/stripe/webhook
+		// and paste the signing secret here.
 		webhookSecret: 'whsec_...',
-		// CLT Dev connected account. Checkout refuses to start if this is missing
-		// so PGM is never charged 100% with no split.
+		// CLT Dev connected account id (acct_...). Checkout refuses to start if
+		// this is missing so PGM is never charged 100% with no 5% split.
 		cltDevAccountId: 'acct_...'
 	}
 };
