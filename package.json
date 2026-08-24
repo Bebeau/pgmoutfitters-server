@@ -48,5 +48,6 @@
   "main": "index.js",
   "repository": "https://github.com/Bebeau/pgmoutfitters.git",
   "author": "Kyle Bebeau",
-  "license": "MIT"
+  "license": "MIT",
+  "packageManager": "npm@10.9.7"
 }
