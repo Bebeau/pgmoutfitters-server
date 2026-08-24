@@ -10,11 +10,7 @@ const session = require('express-session');
 const PostgresUtils = require('./utils/PostgresUtils');
 
 async function connectDb() {
-	try {
-		await PostgresUtils.connect();
-	} catch (err) {
-		return console.log(err);
-	}
+	await PostgresUtils.connect();
 }
 
 function setupCors() {
@@ -60,11 +56,15 @@ function startServer() {
 
 const app = express();
 
-connectDb();
-setupCors();
-
-setupSession();
-setupMiddleware();
-
-setupRoutes();
-startServer();
+connectDb()
+	.then(() => {
+		setupCors();
+		setupSession();
+		setupMiddleware();
+		setupRoutes();
+		startServer();
+	})
+	.catch((err) => {
+		console.log(err);
+		process.exit(1);
+	});

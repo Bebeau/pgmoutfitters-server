@@ -1,7 +1,7 @@
 const Inquiry = require('../models/Inquiry');
 const PostgresUtils = require('./PostgresUtils');
 
-class UserUtils {
+class InquiryUtils {
 	static async newInquiry (
 		type,
 		first,
@@ -15,7 +15,7 @@ class UserUtils {
 		createAt, 
 		updatedAt
 		) {
-		email = email.toLowerCase();
+		email = (email || '').toLowerCase();
 
 		const createdAt = createAt != null ? new Date(createAt) : new Date();
 		const updated = updatedAt != null ? new Date(updatedAt) : new Date();
@@ -45,4 +45,4 @@ class UserUtils {
 
 }
 
-module.exports = UserUtils;
+module.exports = InquiryUtils;
