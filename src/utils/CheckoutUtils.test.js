@@ -337,7 +337,7 @@ describe('CheckoutUtils.handleCheckoutCompleted', () => {
 		);
 		assert.match(template, /href="\{\{link\}\}"/);
 		assert.match(template, /href="\{\{pickupMapsUrl\}\}"/);
-		assert.match(template, /pgmoutfitters\.com\/static\/media\/logo\./);
+		assert.match(template, /https:\/\/pgmoutfitters\.com\/logo\.png/);
 		assert.doesNotMatch(template, /files\.stripe\.com/);
 		assert.doesNotMatch(template, /href=""/);
 		assert.doesNotMatch(template, /<svg[\s>]/);
