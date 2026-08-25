@@ -336,6 +336,11 @@ describe('CheckoutUtils.handleCheckoutCompleted', () => {
 			'utf8'
 		);
 		assert.match(template, /href="\{\{link\}\}"/);
+		assert.match(template, /href="\{\{pickupMapsUrl\}\}"/);
+		assert.match(template, /pgmoutfitters\.com\/static\/media\/logo\./);
+		assert.doesNotMatch(template, /files\.stripe\.com/);
+		assert.doesNotMatch(template, /href=""/);
+		assert.doesNotMatch(template, /<svg[\s>]/);
 	});
 
 	it('does not set email_sent_at and throws when send fails', async () => {

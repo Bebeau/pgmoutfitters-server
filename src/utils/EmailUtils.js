@@ -139,14 +139,29 @@ transporter.use(
 
 const CheckoutUtils = require('./CheckoutUtils');
 
-const STAFF_RECIPIENTS = [
-  // 'sales@pgmoutfitters.com',
-  // 'precisiongear@bellsouth.net',
+const DEFAULT_STAFF_RECIPIENTS = [
+  'sales@pgmoutfitters.com',
+  'precisiongear@bellsouth.net',
   'kyle@cltdev.com',
 ];
 
+// Production always uses the three addresses above. For a test-only list, set
+// STAFF_EMAIL_OVERRIDE to a comma-separated list (e.g. kyle@cltdev.com).
+function staffRecipients() {
+  const override = (process.env.STAFF_EMAIL_OVERRIDE || '').trim();
+  if (!override) {
+    return DEFAULT_STAFF_RECIPIENTS;
+  }
+  const parsed = override.split(',').map((value) => value.trim()).filter(Boolean);
+  return parsed.length ? parsed : DEFAULT_STAFF_RECIPIENTS;
+}
+
+const STAFF_RECIPIENTS = staffRecipients();
+
 const PICKUP_ADDRESS = '908 Joseph St, Shreveport, LA 71107';
 const PICKUP_PHONE = '(318) 227-8145';
+// Copied from pgmoutfitters-client PR #6 src/components/cart.tsx (do not invent).
+const PICKUP_MAPS_URL = 'https://www.google.com/maps/place/908+Joseph+St,+Shreveport,+LA+71107/@32.5293771,-93.7613823,750m/data=!3m2!1e3!4b1!4m6!3m5!1s0x8636ccd92aad605d:0xd962e00b360ec708!8m2!3d32.5293771!4d-93.7588074!16s%2Fg%2F11c1h99zbr?entry=ttu&g_ep=EgoyMDI2MDgxOS4wIKXMDSoASAFQAw%3D%3D';
 const FROM_ADDRESS = 'PGM Outfitters <noreply@pgmoutfitters.com>';
 
 class EmailUtils {
@@ -179,7 +194,6 @@ class EmailUtils {
     const staffEmail = {
       from: 'PGM Outfitters Website Inquiry <noreply@pgmoutfitters.com>',
       to: STAFF_RECIPIENTS,
-      // to: 'kyle@cltdev.com',
       subject: 'New Purchase Inquiry',
       template: 'staff',
       context: {
@@ -222,6 +236,7 @@ class EmailUtils {
       items,
       total: EmailUtils.formatter.format(Number(order.totalCents) / 100),
       pickupAddress: PICKUP_ADDRESS,
+      pickupMapsUrl: PICKUP_MAPS_URL,
       pickupPhone: PICKUP_PHONE,
       orderId: order.id,
     };
