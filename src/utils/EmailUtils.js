@@ -140,8 +140,8 @@ transporter.use(
 const CheckoutUtils = require('./CheckoutUtils');
 
 const STAFF_RECIPIENTS = [
-  'sales@pgmoutfitters.com',
-  'precisiongear@bellsouth.net',
+  // 'sales@pgmoutfitters.com',
+  // 'precisiongear@bellsouth.net',
   'kyle@cltdev.com',
 ];
 
@@ -229,7 +229,7 @@ class EmailUtils {
 
   static async sendOrderEmails(order) {
     const buyerContext = EmailUtils.orderEmailContext(order, 'Thanks for your order');
-    const staffContext = EmailUtils.orderEmailContext(order, 'New paid website order');
+    const staffContext = EmailUtils.orderEmailContext(order, 'New Web Order');
 
     if (order.customerEmail) {
       try {
@@ -251,7 +251,7 @@ class EmailUtils {
       const info = await transporter.sendMail({
         from: FROM_ADDRESS,
         to: STAFF_RECIPIENTS,
-        subject: 'New paid website order',
+        subject: 'New Web Order!',
         template: 'order',
         context: staffContext,
       });
