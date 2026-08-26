@@ -35,7 +35,7 @@ describe('CheckoutUtils.priceCart', () => {
 			assert.equal(product.image.includes('127.0.0.1'), false);
 			assert.equal(
 				product.image,
-				`https://pgmoutfitters.com/feeders/${slug}.jpg`
+				`https://pgmoutfitters.com/feeders/${slug}.png`
 			);
 			const productData = StripeUtils.lineItemProductData({
 				slug,
@@ -44,9 +44,9 @@ describe('CheckoutUtils.priceCart', () => {
 			assert.deepEqual(productData.images, [product.image]);
 			assert.equal(productData.name, CheckoutUtils.checkoutProductName(product.name));
 		});
-		assert.equal(StripeUtils.isAbsoluteHttpsUrl('/feeders/1-n-1.jpg'), false);
-		assert.equal(StripeUtils.isAbsoluteHttpsUrl('http://127.0.0.1:3000/feeders/1-n-1.jpg'), false);
-		assert.equal(StripeUtils.isAbsoluteHttpsUrl('https://pgmoutfitters.com/feeders/1-n-1.jpg'), true);
+		assert.equal(StripeUtils.isAbsoluteHttpsUrl('/feeders/1-n-1.png'), false);
+		assert.equal(StripeUtils.isAbsoluteHttpsUrl('http://127.0.0.1:3000/feeders/1-n-1.png'), false);
+		assert.equal(StripeUtils.isAbsoluteHttpsUrl('https://pgmoutfitters.com/feeders/1-n-1.png'), true);
 	});
 
 	it('recalculates totals from the server price map', () => {
