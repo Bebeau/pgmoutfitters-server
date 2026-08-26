@@ -29,6 +29,26 @@ describe('CheckoutUtils.priceCart', () => {
 		assert.equal(CheckoutUtils.checkoutProductName(PRODUCTS['rice-brand'].name), 'Rice Brand Deer Feeder');
 	});
 
+	it('uses absolute https feeder images on checkout product_data', () => {
+		Object.entries(PRODUCTS).forEach(([slug, product]) => {
+			assert.match(product.image, /^https:\/\/pgmoutfitters\.com\/feeders\//);
+			assert.equal(product.image.includes('127.0.0.1'), false);
+			assert.equal(
+				product.image,
+				`https://pgmoutfitters.com/feeders/${slug}.jpg`
+			);
+			const productData = StripeUtils.lineItemProductData({
+				slug,
+				name: product.name
+			});
+			assert.deepEqual(productData.images, [product.image]);
+			assert.equal(productData.name, CheckoutUtils.checkoutProductName(product.name));
+		});
+		assert.equal(StripeUtils.isAbsoluteHttpsUrl('/feeders/1-n-1.jpg'), false);
+		assert.equal(StripeUtils.isAbsoluteHttpsUrl('http://127.0.0.1:3000/feeders/1-n-1.jpg'), false);
+		assert.equal(StripeUtils.isAbsoluteHttpsUrl('https://pgmoutfitters.com/feeders/1-n-1.jpg'), true);
+	});
+
 	it('recalculates totals from the server price map', () => {
 		const cart = CheckoutUtils.priceCart([
 			{ slug: '1-n-1', qty: 2 },

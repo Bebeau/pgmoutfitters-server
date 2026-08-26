@@ -40,11 +40,28 @@ class StripeUtils {
 		return new Stripe(secretKey);
 	}
 
+	static isAbsoluteHttpsUrl(value) {
+		return typeof value === 'string' && /^https:\/\//i.test(value.trim());
+	}
+
+	static lineItemProductData(item) {
+		const CheckoutUtils = require('./CheckoutUtils');
+		const PRODUCTS = require('../data/products');
+		const product = PRODUCTS[item.slug] || {};
+		const product_data = {
+			name: CheckoutUtils.checkoutProductName(item.name),
+			metadata: { slug: item.slug }
+		};
+		if (StripeUtils.isAbsoluteHttpsUrl(product.image)) {
+			product_data.images = [product.image];
+		}
+		return product_data;
+	}
+
 	static async createCheckoutSession({ order, priced, origin }) {
 		StripeUtils.assertCheckoutConfigured();
 		const stripe = StripeUtils.getClient();
 		const destination = stripeConfig().cltDevAccountId;
-		const CheckoutUtils = require('./CheckoutUtils');
 
 		return stripe.checkout.sessions.create({
 			mode: 'payment',
@@ -54,10 +71,7 @@ class StripeUtils {
 				price_data: {
 					currency: 'usd',
 					unit_amount: item.unit_amount_cents,
-					product_data: {
-						name: CheckoutUtils.checkoutProductName(item.name),
-						metadata: { slug: item.slug }
-					}
+					product_data: StripeUtils.lineItemProductData(item)
 				}
 			})),
 			phone_number_collection: { enabled: true },
