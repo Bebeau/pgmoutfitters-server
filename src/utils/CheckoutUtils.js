@@ -34,6 +34,14 @@ class CheckoutUtils {
 		return null;
 	}
 
+	// Same rule as client productPageTitle, without the site suffix:
+	// "{name} Deer Feeder" unless name already ends with Feeder.
+	static checkoutProductName(name) {
+		const trimmed = String(name || '').trim();
+		const suffix = /feeder$/i.test(trimmed) ? '' : ' Deer Feeder';
+		return `${trimmed}${suffix}`;
+	}
+
 	static priceCart(rawItems) {
 		if (!Array.isArray(rawItems) || rawItems.length === 0) {
 			throw new CheckoutError('Cart items are required.');

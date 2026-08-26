@@ -21,6 +21,14 @@ describe('CheckoutUtils.priceCart', () => {
 		assert.equal(PRODUCTS['covey-cafe'].unit_amount_cents, 125000);
 	});
 
+	it('titles checkout product names like the client product page', () => {
+		assert.equal(CheckoutUtils.checkoutProductName(PRODUCTS['2-n-1'].name), '2-N-1 Deer Feeder');
+		assert.equal(CheckoutUtils.checkoutProductName(PRODUCTS['dock-feeder'].name), 'Dock Feeder');
+		assert.equal(CheckoutUtils.checkoutProductName(PRODUCTS['1-n-1'].name), '1-N-1 Deer Feeder');
+		assert.equal(CheckoutUtils.checkoutProductName(PRODUCTS['xxx'].name), 'XXX Deer Feeder');
+		assert.equal(CheckoutUtils.checkoutProductName(PRODUCTS['rice-brand'].name), 'Rice Brand Deer Feeder');
+	});
+
 	it('recalculates totals from the server price map', () => {
 		const cart = CheckoutUtils.priceCart([
 			{ slug: '1-n-1', qty: 2 },

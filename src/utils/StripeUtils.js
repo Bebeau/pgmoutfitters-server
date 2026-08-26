@@ -44,6 +44,7 @@ class StripeUtils {
 		StripeUtils.assertCheckoutConfigured();
 		const stripe = StripeUtils.getClient();
 		const destination = stripeConfig().cltDevAccountId;
+		const CheckoutUtils = require('./CheckoutUtils');
 
 		return stripe.checkout.sessions.create({
 			mode: 'payment',
@@ -54,7 +55,7 @@ class StripeUtils {
 					currency: 'usd',
 					unit_amount: item.unit_amount_cents,
 					product_data: {
-						name: item.name,
+						name: CheckoutUtils.checkoutProductName(item.name),
 						metadata: { slug: item.slug }
 					}
 				}
