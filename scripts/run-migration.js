@@ -6,13 +6,24 @@ const { Pool } = require('pg');
 const config = require('../config/keys');
 
 async function run() {
-	const sqlPath = path.join(__dirname, '..', 'migrations', '001_create_inquiries.sql');
-	const sql = fs.readFileSync(sqlPath, 'utf8');
+	const migrationsDir = path.join(__dirname, '..', 'migrations');
+	const files = fs.readdirSync(migrationsDir)
+		.filter((file) => file.endsWith('.sql'))
+		.sort();
+
+	if (!files.length) {
+		console.log('No migrations found.');
+		return;
+	}
+
 	const pool = new Pool({ connectionString: config.db });
 
 	try {
-		await pool.query(sql);
-		console.log('Migration applied: 001_create_inquiries.sql');
+		for (const file of files) {
+			const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+			await pool.query(sql);
+			console.log(`Migration applied: ${file}`);
+		}
 	} finally {
 		await pool.end();
 	}

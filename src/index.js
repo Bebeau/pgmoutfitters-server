@@ -38,6 +38,11 @@ function setupSession() {
 	}));
 }
 
+function setupWebhook() {
+	// Raw body required for Stripe signature verification. Must run before JSON parsing.
+	app.use(require('./routes/stripe.js'));
+}
+
 function setupMiddleware() {
 	app.use(bodyParser.json());
 	app.use(bodyParser.urlencoded({extended: true}));
@@ -46,7 +51,9 @@ function setupMiddleware() {
 
 function setupRoutes() {
 	var inquiry = require('./routes/inquiry.js');
+	var checkout = require('./routes/checkout.js');
 	app.use(inquiry);
+	app.use(checkout);
 }
 
 function startServer() {
@@ -60,6 +67,7 @@ connectDb()
 	.then(() => {
 		setupCors();
 		setupSession();
+		setupWebhook();
 		setupMiddleware();
 		setupRoutes();
 		startServer();

@@ -137,6 +137,33 @@ transporter.use(
   })
 );
 
+const CheckoutUtils = require('./CheckoutUtils');
+
+const DEFAULT_STAFF_RECIPIENTS = [
+  'sales@pgmoutfitters.com',
+  'precisiongear@bellsouth.net',
+  'kyle@cltdev.com',
+];
+
+// Production always uses the three addresses above. For a test-only list, set
+// STAFF_EMAIL_OVERRIDE to a comma-separated list (e.g. kyle@cltdev.com).
+function staffRecipients() {
+  const override = (process.env.STAFF_EMAIL_OVERRIDE || '').trim();
+  if (!override) {
+    return DEFAULT_STAFF_RECIPIENTS;
+  }
+  const parsed = override.split(',').map((value) => value.trim()).filter(Boolean);
+  return parsed.length ? parsed : DEFAULT_STAFF_RECIPIENTS;
+}
+
+const STAFF_RECIPIENTS = staffRecipients();
+
+const PICKUP_ADDRESS = '908 Joseph St, Shreveport, LA 71107';
+const PICKUP_PHONE = '(318) 227-8145';
+// Copied from pgmoutfitters-client PR #6 src/components/cart.tsx (do not invent).
+const PICKUP_MAPS_URL = 'https://www.google.com/maps/place/908+Joseph+St,+Shreveport,+LA+71107/@32.5293771,-93.7613823,750m/data=!3m2!1e3!4b1!4m6!3m5!1s0x8636ccd92aad605d:0xd962e00b360ec708!8m2!3d32.5293771!4d-93.7588074!16s%2Fg%2F11c1h99zbr?entry=ttu&g_ep=EgoyMDI2MDgxOS4wIKXMDSoASAFQAw%3D%3D';
+const FROM_ADDRESS = 'PGM Outfitters <noreply@pgmoutfitters.com>';
+
 class EmailUtils {
   static formatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -166,8 +193,7 @@ class EmailUtils {
 
     const staffEmail = {
       from: 'PGM Outfitters Website Inquiry <noreply@pgmoutfitters.com>',
-      to: ['sales@pgmoutfitters.com', 'precisiongear@bellsouth.net', 'kyle@cltdev.com'],
-      // to: 'kyle@cltdev.com',
+      to: STAFF_RECIPIENTS,
       subject: 'New Purchase Inquiry',
       template: 'staff',
       context: {
@@ -189,6 +215,65 @@ class EmailUtils {
       return info;
     } catch (err) {
       console.error('Staff autoresponder failed to send:', err);
+      throw err;
+    }
+  }
+
+  static orderEmailContext(order, heading) {
+    const items = (order.items || []).map((item) => ({
+      name: item.name,
+      qty: item.qty,
+      link: CheckoutUtils.productPageUrl(item.slug),
+      price: EmailUtils.formatter.format(Number(item.unit_amount_cents) / 100),
+    }));
+
+    return {
+      layout: false,
+      heading,
+      customerName: order.customerName || '',
+      customerEmail: order.customerEmail || '',
+      customerPhone: order.customerPhone || '',
+      items,
+      total: EmailUtils.formatter.format(Number(order.totalCents) / 100),
+      pickupAddress: PICKUP_ADDRESS,
+      pickupMapsUrl: PICKUP_MAPS_URL,
+      pickupPhone: PICKUP_PHONE,
+      orderId: order.id,
+    };
+  }
+
+  static async sendOrderEmails(order) {
+    const buyerContext = EmailUtils.orderEmailContext(order, 'Thanks for your order');
+    const staffContext = EmailUtils.orderEmailContext(order, 'New Web Order');
+
+    if (order.customerEmail) {
+      try {
+        const info = await transporter.sendMail({
+          from: FROM_ADDRESS,
+          to: order.customerEmail,
+          subject: 'Your PGM Outfitters order',
+          template: 'order',
+          context: buyerContext,
+        });
+        console.log('Buyer order email sent...', info.messageId);
+      } catch (err) {
+        console.error('Buyer order email failed to send:', err);
+        throw err;
+      }
+    }
+
+    try {
+      const info = await transporter.sendMail({
+        from: FROM_ADDRESS,
+        to: STAFF_RECIPIENTS,
+        subject: 'New Web Order!',
+        template: 'order',
+        context: staffContext,
+      });
+      console.log('Staff order email sent...', info.messageId);
+      return info;
+    } catch (err) {
+      console.error('Staff order email failed to send:', err);
       throw err;
     }
   }
