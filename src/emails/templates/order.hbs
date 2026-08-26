@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>PGM Outfitters - Order</title>
+        <style>
+            table {
+                background: #ebebeb;
+                padding: 0;
+                margin: 0;
+            }
+            tr {
+                margin: 0;
+                padding: 0;
+                border: none;
+            }
+            th,td {
+                padding: 10px;
+                border: 0;
+            }
+        </style>
+    </head>
+    <body style="color: black; background: #223047;">
+        <div style="max-width: 600px; background: white; border-radius: 10px; margin: 20px auto; padding: 40px;">
+            <a href="https://pgmoutfitters.com" style="display: block;">
+                <img style="width: 100px; height: auto; margin-bottom: 20px; display: block;" src="https://pgmoutfitters.com/logo.png" alt="PGM Outfitters" />
+            </a>
+            <header>
+                <h1>
+                    {{heading}}
+                    <br />
+                    #{{orderId}}
+                </h1>
+            </header>
+            <div>
+                <h3>Order summary</h3>
+                <table width="100%" cellspacing="0">
+                    <thead>
+                        <th style="text-align: left;">Product</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                    </thead>
+                    {{#each items}}
+                        <tr>
+                            <td><a href="{{link}}" target="_blank">{{name}}</a></td>
+                            <td style="text-align: center;">{{qty}}</td>
+                            <td style="text-align: center;">{{price}}</td>
+                        </tr>
+                    {{/each}}
+                    <tr style="background: #223047; color: white;">
+                        <td colspan="2" style="text-align: right; font-weight: bold;">
+                            Total
+                        </td>
+                        <td style="text-align: center; font-weight: bold; background: #7C8969; color: white;">
+                            {{total}}
+                        </td>
+                    </tr>
+                </table>
+                <h3>Pickup</h3>
+                <p>
+                    Pickup at <a href="{{pickupMapsUrl}}" target="_BLANK" rel="noreferrer">{{pickupAddress}}</a>.<br />
+                    Please call ahead at <a href="tel:3182278145">{{pickupPhone}}</a> or email us at <a href="mailto:sales@pgmoutfitters.com">sales@pgmoutfitters.com</a> to schedule your pickup.
+                </p>
+                <h3>Customer Info</h3>
+                <div>
+                    {{customerName}}
+                    <br />
+                    {{customerEmail}}
+                    <br />
+                    {{customerPhone}}
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

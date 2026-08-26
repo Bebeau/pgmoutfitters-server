@@ -26,7 +26,8 @@
   },
   "scripts": {
     "dev": "node ./src/index.js",
-    "migrate": "node ./scripts/run-migration.js"
+    "migrate": "node ./scripts/run-migration.js",
+    "test:checkout": "node --test src/utils/CheckoutUtils.test.js"
   },
   "eslintConfig": {
     "extends": [
